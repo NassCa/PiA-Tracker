@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PiA Stundentracker · DGVT Dresden</title>
+<meta name="application-name" content="PiA Tracker">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PiA Tracker">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Stundentracker für die PiA-Ausbildung nach altem Recht · DGVT Dresden">
+<meta name="theme-color" id="tc" content="#f5f0e8">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:#3d8b8b;--teal-lt:#e4f2f2;
+  --peach:#e07a60;--peach-lt:#fbeee9;
+  --sage:#6a9470;--sage-lt:#eaf3eb;
+  --lav:#8272b0;--lav-lt:#f0eef9;
+  --amber:#b8902e;--amber-lt:#faf3e0;
+  --amber2:#9a7428;--amber2-lt:#f5eedd;
+  --slate:#5a7282;--slate-lt:#eaf0f4;
+  --moss:#5e8264;--moss-lt:#e8f2ea;
+  --rose:#aa6070;--rose-lt:#f7e8ec;
+  --r:12px;--gap:.875rem;
+}
+[data-theme="light"]{
+  --bg:#f5f0e8;--bg2:#fdfbf7;--bg3:#ede8de;--bg4:#e4ddd3;
+  --bdr:#d6cfc3;--bdr2:#bfb8ae;
+  --tx:#28231e;--tx2:#4a4540;--mu:#8a8278;--mu2:#a8a098;
+  --sh1:0 1px 3px rgba(80,60,40,.07);--sh2:0 4px 14px rgba(80,60,40,.10);
+  --tot-bg:#2e6f70;--tot-tx:#f0fafa;
+  --xbg:#f8f5ee;--xbdr:#ddd6c8;
+  --sbg:#faf7f2;--sbdr:#d4cbbf;
+}
+[data-theme="dark"]{
+  --bg:#1e2228;--bg2:#252b33;--bg3:#2d3440;--bg4:#343f4d;
+  --bdr:#3a4450;--bdr2:#4a5868;
+  --tx:#e4ddd5;--tx2:#c4bbb0;--mu:#7a8898;--mu2:#566070;
+  --sh1:0 1px 3px rgba(0,0,0,.22);--sh2:0 4px 14px rgba(0,0,0,.32);
+  --tot-bg:#2a4f50;--tot-tx:#e0f4f4;
+  --xbg:#222930;--xbdr:#36414e;
+  --sbg:#1d2430;--sbdr:#2e3a48;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;
+  min-height:100vh;padding-bottom:4rem;
+  transition:background .25s,color .25s;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* HEADER */
+header{
+  background:var(--bg2);border-bottom:1px solid var(--bdr);
+  padding:1.6rem 1.5rem 1.4rem;
+  position:sticky;top:0;z-index:100;
+  box-shadow:var(--sh1);
+  transition:background .25s,border-color .25s;
+}
+.h-inner{max-width:1020px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.h-left{flex:1;min-width:180px}
+.wordmark{font-family:'Fraunces',serif;font-size:clamp(1.35rem,3.5vw,1.9rem);font-weight:400;line-height:1.1;color:var(--tx);letter-spacing:-.01em;}
+.wordmark em{font-style:italic;color:var(--teal)}
+.h-meta{margin-top:.25rem;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--mu);letter-spacing:.04em;}
+.h-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
+
+.offline-pill{display:none;align-items:center;gap:.3rem;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.06em;padding:.18rem .55rem;background:var(--peach-lt);color:var(--peach);border:1px solid var(--peach);border-radius:99px;}
+.offline-pill.show{display:inline-flex}
+.offline-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--peach)}
+
+.tbtn{display:flex;align-items:center;gap:.4rem;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:.38rem .72rem;cursor:pointer;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;color:var(--mu);transition:all .15s;user-select:none;white-space:nowrap;}
+.tbtn:hover{background:var(--bg4);border-color:var(--bdr2);color:var(--tx)}
+.tbtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* WRAP */
+.wrap{max-width:1020px;margin:0 auto;padding:0 1.25rem}
+
+/* TOTAL CARD */
+.total-card{
+  background:var(--tot-bg);color:var(--tot-tx);
+  border-radius:var(--r);padding:1.5rem 1.75rem;
+  margin-top:1.75rem;box-shadow:var(--sh2);
+  position:relative;overflow:hidden;
+}
+.total-card::after{content:'';position:absolute;right:-3rem;top:-3rem;width:12rem;height:12rem;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none;}
+.tot-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem;margin-bottom:1.2rem;}
+.tot-lbl{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:.35rem;}
+.tot-num{font-family:'Fraunces',serif;font-size:2.5rem;font-weight:300;color:#fff;line-height:1;letter-spacing:-.02em;}
+.tot-num span{font-size:1.1rem;color:rgba(255,255,255,.4);font-weight:300}
+.tot-pct{font-family:'Fraunces',serif;font-size:2.1rem;font-weight:300;color:rgba(255,255,255,.88);line-height:1;letter-spacing:-.02em;text-align:right;}
+.tot-pct-lbl{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:rgba(255,255,255,.38);text-align:right;}
+.tot-track{height:6px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden}
+.tot-fill{height:100%;background:rgba(255,255,255,.72);border-radius:99px;transition:width .6s cubic-bezier(.22,.68,0,1.2)}
+.tot-sub{margin-top:.55rem;font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.38);text-align:right;}
+
+/* SECTION */
+.sec-hd{margin:2.25rem 0 .9rem;display:flex;align-items:baseline;gap:.75rem;}
+.sec-hd h2{font-family:'Fraunces',serif;font-size:1rem;font-weight:400;color:var(--tx2);letter-spacing:-.01em;white-space:nowrap;}
+.sec-hd .sec-tot{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);letter-spacing:.05em;white-space:nowrap;}
+.sec-hd::after{content:'';flex:1;height:1px;background:var(--bdr);min-width:2rem}
+.sec-note{font-size:.75rem;color:var(--mu);background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:.55rem .875rem;margin-bottom:.875rem;line-height:1.65;}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:var(--gap)}
+
+/* CARD */
+.card{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:1.125rem 1.25rem 1rem;
+  display:flex;flex-direction:column;gap:.875rem;
+  box-shadow:var(--sh1);
+  transition:box-shadow .2s,border-color .2s,background .25s;
+}
+.card:hover{box-shadow:var(--sh2);border-color:var(--bdr2)}
+.card.spitze{background:var(--sbg);border:1px dashed var(--sbdr);box-shadow:none}
+.card.zusatz{background:var(--xbg);border-color:var(--xbdr)}
+
+.c-stripe{height:3px;margin:-1.125rem -1.25rem 0;border-radius:var(--r) var(--r) 0 0;opacity:.85}
+.c-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
+.c-titles{flex:1;min-width:0}
+.c-code{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:.15rem}
+.c-name{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:400;line-height:1.2;color:var(--tx);letter-spacing:-.01em}
+.c-sub{font-size:.72rem;color:var(--mu);margin-top:.1rem}
+.c-badge{font-family:'DM Mono',monospace;font-size:.68rem;font-weight:500;padding:.18rem .5rem;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx2);white-space:nowrap;flex-shrink:0}
+
+/* STEPPER INPUT */
+.inp-section{display:flex;flex-direction:column;gap:.38rem}
+.inp-lbl-row{display:flex;justify-content:space-between;align-items:baseline}
+.inp-lbl{font-size:.7rem;color:var(--mu);font-weight:500}
+.inp-hint{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mu2)}
+.inp-row{display:flex;align-items:center;gap:.375rem}
+.sbt{
+  width:36px;height:36px;background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:8px;color:var(--tx2);font-size:1.25rem;font-weight:300;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .12s,border-color .12s,color .12s;
+  line-height:1;flex-shrink:0;user-select:none;touch-action:manipulation;
+}
+.sbt:hover{background:var(--bg4);border-color:var(--bdr2);color:var(--tx)}
+.sbt:active{transform:scale(.93)}
+/* Large +10 button */
+.sbt-ten{
+  padding:0 .7rem;width:auto;font-size:.65rem;font-family:'DM Mono',monospace;
+  letter-spacing:.04em;color:var(--mu);height:36px;
+}
+.sbt-ten:hover{color:var(--tx)}
+
+input[type=number]{
+  flex:1;min-width:0;background:var(--bg);border:1px solid var(--bdr);
+  border-radius:8px;color:var(--tx);
+  font-family:'DM Mono',monospace;font-size:.95rem;font-weight:500;
+  padding:.42rem .6rem;outline:none;text-align:center;
+  transition:border-color .15s,background .15s,box-shadow .15s;
+  -moz-appearance:textfield;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=number]:focus{border-color:var(--teal);background:var(--bg2);box-shadow:0 0 0 3px rgba(61,139,139,.12);}
+
+/* SPLIT */
+.split-wrap{display:flex;flex-direction:column;gap:.55rem}
+.spl-lbl{font-size:.7rem;color:var(--mu);font-weight:500;margin-bottom:.22rem}
+.spl-sub{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--mu2);margin-left:.3rem}
+.split-div{height:1px;background:var(--bdr)}
+.split-tot-row{display:flex;justify-content:space-between;align-items:center;padding-top:.05rem}
+.split-tot-lbl{font-size:.7rem;color:var(--mu);font-weight:500}
+.split-tot-val{font-family:'DM Mono',monospace;font-size:.73rem;font-weight:500;color:var(--tx2)}
+
+/* PROGRESS */
+.prog-wrap{display:flex;flex-direction:column;gap:.38rem}
+.track{height:6px;background:var(--bg4);border-radius:99px;overflow:hidden}
+.fill{height:100%;border-radius:99px;transition:width .5s cubic-bezier(.22,.68,0,1.2)}
+.prog-meta{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.2rem}
+.p-done{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu)}
+.p-rem{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:500}
+.p-rem.ok{color:var(--sage)!important}
+
+.sub-tracks{display:flex;flex-direction:column;gap:.3rem;margin-top:.1rem}
+.sub-tr-row{display:flex;align-items:center;gap:.45rem}
+.sub-tr-lbl{font-family:'DM Mono',monospace;font-size:.54rem;color:var(--mu2);width:4.8rem;flex-shrink:0}
+.sub-tr{flex:1;height:4px;background:var(--bg4);border-radius:99px;overflow:hidden}
+.sub-fill{height:100%;border-radius:99px;transition:width .5s cubic-bezier(.22,.68,0,1.2)}
+.sub-val{font-family:'DM Mono',monospace;font-size:.54rem;color:var(--mu2);width:3rem;text-align:right;flex-shrink:0}
+
+.c-note{font-size:.71rem;color:var(--mu);line-height:1.62;padding-top:.5rem;border-top:1px solid var(--bdr)}
+.c-note strong{color:var(--tx2);font-weight:500}
+
+/* FOOTER */
+.ftr-act{margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;}
+.rst-btn{background:none;border:1px solid var(--bdr);border-radius:8px;color:var(--mu);font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.05em;padding:.48rem 1rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .15s;}
+.rst-btn:hover{border-color:var(--rose);color:var(--rose);background:var(--rose-lt)}
+.rst-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+footer{margin-top:3rem;border-top:1px solid var(--bdr);padding:1.25rem 1.5rem;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mu2);text-align:center;line-height:2;letter-spacing:.03em;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-inner">
+    <div class="h-left">
+      <div class="wordmark">PiA Stundentracker &mdash; <em>DGVT Dresden</em></div>
+      <div class="h-meta">Psychologische Psychotherapie &nbsp;&middot;&nbsp; Altes Recht (PsychThG / PsychTh-APrV) &nbsp;&middot;&nbsp; bis 2032</div>
+    </div>
+    <div class="h-right">
+      <span class="offline-pill" id="offline-pill">Offline</span>
+      <button class="tbtn" id="tbtn" onclick="toggleTheme()" aria-label="Theme wechseln">
+        <svg id="ico-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="ico-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span id="tlbl">Dunkel</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="total-card">
+    <div class="tot-row">
+      <div>
+        <div class="tot-lbl">Pflichtstunden Gesamt</div>
+        <div class="tot-num" id="tot-num">0 <span>/ 3.270 h</span></div>
+      </div>
+      <div>
+        <div class="tot-pct" id="tot-pct">0%</div>
+        <div class="tot-pct-lbl">abgeleistet</div>
+      </div>
+    </div>
+    <div class="tot-track"><div class="tot-fill" id="tot-fill" style="width:0%"></div></div>
+    <div class="tot-sub" id="tot-sub">3.270 h verbleibend</div>
+  </div>
+
+  <div class="sec-hd"><h2>Praktische Tätigkeiten</h2><span class="sec-tot">1.800 h</span></div>
+  <div class="grid" id="grid-pt"></div>
+
+  <div class="sec-hd"><h2>Praktische Ausbildung</h2><span class="sec-tot">600 h</span></div>
+  <div class="grid" id="grid-pa"></div>
+
+  <div class="sec-hd"><h2>Supervision</h2><span class="sec-tot">150 h gesamt &nbsp;&middot;&nbsp; 50 h Einzel &nbsp;+&nbsp; 100 h Gruppe</span></div>
+  <div class="grid" id="grid-sv"></div>
+
+  <div class="sec-hd"><h2>Theoretische Ausbildung</h2><span class="sec-tot">600 h gesamt &nbsp;&middot;&nbsp; § 3 PsychTh-APrV</span></div>
+  <div class="grid" id="grid-th"></div>
+
+  <div class="sec-hd"><h2>Selbsterfahrung</h2><span class="sec-tot">120 h</span></div>
+  <div class="grid" id="grid-se"></div>
+
+  <div class="sec-hd"><h2>Freie Spitze</h2><span class="sec-tot">bis 300 h anrechenbar auf PT 2</span></div>
+  <div class="grid" id="grid-fs"></div>
+
+  <div class="sec-hd"><h2>Zusatzqualifikation Gruppenpsychotherapie</h2></div>
+  <div class="sec-note">Berechtigt zur Abrechnung von Gruppenbehandlungen &nbsp;&middot;&nbsp; Zertifikat der DGVT Dresden &nbsp;&middot;&nbsp; KV-Abrechnungsgenehmigung Gruppentherapie (Richtlinienverfahren VT)</div>
+  <div class="grid" id="grid-gpt"></div>
+
+  <div class="ftr-act">
+    <button class="rst-btn" onclick="resetAll()">
+      <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+      Alle Stunden zurücksetzen
+    </button>
+  </div>
+</div>
+
+<footer>
+  Rechtsgrundlage: PsychThG (alt) &nbsp;&middot;&nbsp; PsychTh-APrV §3–§6 &nbsp;&middot;&nbsp; DGVT Dresden Ausbildungscurriculum<br>
+  Alle Daten lokal im Browser &nbsp;&middot;&nbsp; Keine Serververbindung &nbsp;&middot;&nbsp; DSGVO-konform
+</footer>
+
+<script>
+const C={
+  teal:{f:'#3d8b8b'},slate:{f:'#5a7282'},peach:{f:'#e07a60'},
+  rose:{f:'#aa6070'},lav:{f:'#8272b0'},sage:{f:'#6a9470'},
+  amber:{f:'#b8902e'},amber2:{f:'#9a7428'},moss:{f:'#5e8264'},
+};
+
+/* Alle step-Werte sind 1 — Eingabe und ±1-Buttons */
+const BEREICHE=[
+  {id:'pt1',grid:'grid-pt',code:'PT 1',name:'Praktische Tätigkeit 1',
+   sub:'Klinikjahr · Psychiatrie · mind. 12 Monate',
+   color:'teal',target:1200,pflicht:true,
+   note:'<strong>Mind. 12 Monate</strong> an psychiatrisch-klinischer Einrichtung (ärztl. Weiterbildungsermächtigung Psychiatrie). Beteiligung an Diagnostik und Behandlung von <strong>mind. 30 Patient:innen</strong>; bei mind. 4 davon Einbezug von Familie oder Sozialpartner:innen. (§ 3 PsychTh-APrV)'},
+  {id:'pt2',grid:'grid-pt',code:'PT 2',name:'Praktische Tätigkeit 2',
+   sub:'Ambulante oder andere anerkannte Einrichtung',
+   color:'slate',target:600,pflicht:true,
+   note:'Psychiatrische Klinik, psychosomatische oder psychotherapeutische Versorgungseinrichtung oder Praxis. <strong>Bis zu 300 h</strong> können über Vor- und Nachbereitung der PA als Freie Spitze angerechnet werden. (§ 3 PsychTh-APrV)'},
+  {id:'pa',grid:'grid-pa',code:'PA',name:'Praktische Ausbildung',
+   sub:'Eigene Patientenbehandlungen · Ausbildungsambulanz DGVT Dresden',
+   color:'peach',target:600,pflicht:true,
+   note:'<strong>600 Therapieeinheiten</strong> in der Ausbildungsambulanz der DGVT Dresden. Selbstständige Durchführung und Dokumentation, regelmäßige Supervision erforderlich. (§ 4 PsychTh-APrV)'},
+  {id:'sv-einzel',grid:'grid-sv',code:'SV-E',name:'Einzelsupervision',
+   sub:'50 h · Teil der 150 h Gesamtsupervision',
+   color:'rose',target:50,pflicht:true,
+   note:'Individuelle Fallbesprechung mit anerkannten Supervisor:innen. <strong>Mind. 50 Stunden</strong> Einzelsupervision, begleitend zur Praktischen Ausbildung. (§ 4 PsychTh-APrV)'},
+  {id:'sv-gruppe',grid:'grid-sv',code:'SV-G',name:'Gruppensupervision',
+   sub:'100 h · Teil der 150 h Gesamtsupervision',
+   color:'lav',target:100,pflicht:true,
+   note:'<strong>Mind. 100 Stunden</strong> Supervision im Gruppenformat, geleitet von anerkannten Supervisor:innen. Fallbezogen und methodisch. (§ 4 PsychTh-APrV)'},
+  {id:'th-grund',grid:'grid-th',code:'TH-G',name:'Grundkenntnisse',
+   sub:'200 h · Teil der 600 h Theoretischen Ausbildung',
+   color:'amber',target:200,pflicht:true,
+   note:'<strong>200 h Grundkenntnisse</strong>: wissenschaftliche und berufsethische Grundlagen, Störungslehre, Diagnostik, Prävention, Rehabilitation. (§ 3 Abs. 1 Nr. 1 PsychTh-APrV)'},
+  {id:'th-vertiefung',grid:'grid-th',code:'TH-V',name:'Vertiefung und Methodik',
+   sub:'400 h · Teil der 600 h Theoretischen Ausbildung',
+   color:'amber2',target:400,pflicht:true,
+   note:'<strong>400 h vertiefte Kenntnisse</strong> in psycho- und verhaltenstherapeutischen Methoden: störungsbezogene Behandlungskonzepte, spezifische Patientengruppen, settingbezogene Interventionen. (§ 3 Abs. 1 Nr. 2 PsychTh-APrV)'},
+  {id:'se',grid:'grid-se',code:'SE',name:'Selbsterfahrung',
+   sub:'Kursbezogenes Gruppensetting und Blockveranstaltungen',
+   color:'sage',target:120,pflicht:true,
+   note:'Kursbezogenes <strong>Gruppensetting</strong> sowie <strong>4 × 2,5-tägige Blockveranstaltungen</strong> außerhalb Dresdens, geleitet von 2 approbierten Therapeut:innen. Ca. 200 € je Block. (§ 3 Abs. 1 Nr. 3 PsychTh-APrV)'},
+  {id:'fs',grid:'grid-fs',code:'FS',name:'Freie Spitze',
+   sub:'Vor- und Nachbereitung PA · anrechenbar auf PT 2',
+   color:'moss',target:300,pflicht:false,spitze:true,
+   note:'Bis zu <strong>300 Stunden</strong> Vor- und Nachbereitung der Patientenbehandlungen können auf PT 2 angerechnet werden. Die DGVT Dresden erkennt dies ausdrücklich an.'},
+  {id:'gpt-theorie',grid:'grid-gpt',code:'GPT-TH',name:'Theorie Gruppentherapie',
+   sub:'48 UE in 3 Seminaren à 16 UE',
+   color:'teal',target:48,pflicht:false,zusatz:true,unit:'UE',
+   note:'<strong>3 Seminare à 16 UE</strong> zu Theorie der Gruppenpsychotherapie und Gruppendynamik. Bis zu 32 UE von anderen anerkannten VT-Instituten, DGVT-Fortbildungen oder der Universität anrechenbar — mind. 1 Seminar bei DGVT Dresden.'},
+  {id:'gpt-behandlung',grid:'grid-gpt',code:'GPT-B',name:'Gruppenbehandlung',
+   sub:'60 Doppelstunden gesamt',
+   color:'peach',target:60,pflicht:false,zusatz:true,unit:'DS',splitCard:true,
+   splitA:{id:'gpt-b-dgvt',label:'DGVT Dresden',sublabel:'mind. 30 DS',target:30,color:'peach'},
+   splitB:{id:'gpt-b-extern',label:'Extern angerechnet',sublabel:'max. 30 DS (supervidiert)',target:30,color:'slate'},
+   note:'Mind. <strong>30 Doppelstunden über DGVT Dresden</strong>. Bis zu 30 DS aus PT 1 (stationäre Gruppenbehandlung) oder ambulant anrechenbar — sofern fortlaufend supervidiert. Max. 30 DS co-therapeutisch.'},
+  {id:'gpt-se',grid:'grid-gpt',code:'GPT-SE',name:'Selbsterfahrung Gruppe',
+   sub:'80 h · wird über die reguläre PP-Selbsterfahrung abgedeckt',
+   color:'sage',target:80,pflicht:false,zusatz:true,unit:'h',
+   note:'<strong>80 h Selbsterfahrung</strong> werden vollständig durch die Selbsterfahrung der regulären PP-Ausbildung abgedeckt. Kein zusätzlicher Aufwand bei paralleler Ausbildung.'},
+  {id:'gpt-sv',grid:'grid-gpt',code:'GPT-SV',name:'Supervision Gruppentherapie',
+   sub:'30 h bei anerkannten Supervisor:innen',
+   color:'lav',target:30,pflicht:false,zusatz:true,unit:'h',
+   note:'<strong>30 h Supervision</strong> bei anerkannten Supervisor:innen im Richtlinienverfahren VT der Gruppenbehandlung. Gesondert von der regulären PA-Supervision zu erbringen.'},
+];
+
+const TOTAL_TARGET=3270;
+function loadState(){try{return JSON.parse(localStorage.getItem('pia_v4')||'{}')}catch{return{}}}
+function saveState(s){try{localStorage.setItem('pia_v4',JSON.stringify(s))}catch{}}
+let state=loadState();
+function col(k){return C[k]||C.teal}
+
+function renderCard(b){
+  const v=Math.max(0,parseInt(state[b.id]||0));
+  const u=b.unit||'h';
+  const pct=Math.min(100,Math.round(v/b.target*100));
+  const rem=Math.max(0,b.target-v);
+  const done=rem===0;
+  const fc=col(b.color).f;
+  const el=document.createElement('div');
+  el.className='card'+(b.spitze?' spitze':'')+(b.zusatz?' zusatz':'');
+  el.id='card-'+b.id;
+  el.innerHTML=`
+    <div class="c-stripe" style="background:${fc}"></div>
+    <div class="c-head">
+      <div class="c-titles">
+        <div class="c-code">${b.code}</div>
+        <div class="c-name">${b.name}</div>
+        <div class="c-sub">${b.sub}</div>
+      </div>
+      <div class="c-badge">${b.target}\u202f${u}</div>
+    </div>
+    <div class="inp-section">
+      <div class="inp-lbl-row">
+        <span class="inp-lbl">Geleistete ${u === 'h' ? 'Stunden' : u === 'UE' ? 'Unterrichtseinheiten' : 'Doppelstunden'}</span>
+        <span class="inp-hint">±\u202f1 oder direkt eingeben</span>
+      </div>
+      <div class="inp-row">
+        <button class="sbt" onclick="adj('${b.id}',-10,'${u}')" aria-label="−10" title="−10">−10</button>
+        <button class="sbt" onclick="adj('${b.id}',-1,'${u}')" aria-label="−1">&minus;</button>
+        <input type="number" id="inp-${b.id}" value="${v}" min="0" max="${b.target}"
+          oninput="updCard('${b.id}',this.value,'${u}')" aria-label="${b.name}">
+        <button class="sbt" onclick="adj('${b.id}',1,'${u}')" aria-label="+1">+</button>
+        <button class="sbt" onclick="adj('${b.id}',10,'${u}')" aria-label="+10" title="+10">+10</button>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="track"><div class="fill" id="fill-${b.id}" style="width:${pct}%;background:${fc}"></div></div>
+      <div class="prog-meta">
+        <span class="p-done" id="done-${b.id}">${v}\u202f/\u202f${b.target}\u202f${u}\u2002&middot;\u2002${pct}%</span>
+        <span class="p-rem${done?' ok':''}" id="rem-${b.id}" style="${done?'':'color:'+fc}">
+          ${done?'Abgeschlossen':rem+'\u202f'+u+' verbleibend'}</span>
+      </div>
+    </div>
+    <div class="c-note">${b.note}</div>`;
+  return el;
+}
+
+function renderSplitCard(b){
+  const sA=b.splitA,sB=b.splitB;
+  const vA=Math.max(0,parseInt(state[sA.id]||0));
+  const vB=Math.max(0,parseInt(state[sB.id]||0));
+  const u=b.unit||'DS';
+  const fc=col(b.color).f,fcA=col(sA.color).f,fcB=col(sB.color).f;
+  const tot=vA+vB;
+  const pct=Math.min(100,Math.round(tot/b.target*100));
+  const pA=Math.min(100,Math.round(vA/sA.target*100));
+  const pB=Math.min(100,Math.round(vB/sB.target*100));
+  const rem=Math.max(0,b.target-tot);const done=rem===0;
+  const el=document.createElement('div');
+  el.className='card zusatz';el.id='card-'+b.id;
+  el.innerHTML=`
+    <div class="c-stripe" style="background:${fc}"></div>
+    <div class="c-head">
+      <div class="c-titles">
+        <div class="c-code">${b.code}</div>
+        <div class="c-name">${b.name}</div>
+        <div class="c-sub">${b.sub}</div>
+      </div>
+      <div class="c-badge">${b.target}\u202f${u}</div>
+    </div>
+    <div class="split-wrap">
+      <div>
+        <div class="spl-lbl">${sA.label}<span class="spl-sub">${sA.sublabel}</span></div>
+        <div class="inp-row">
+          <button class="sbt" onclick="adjSplit('${sA.id}','${b.id}',-10)" title="−10">−10</button>
+          <button class="sbt" onclick="adjSplit('${sA.id}','${b.id}',-1)">&minus;</button>
+          <input type="number" id="inp-${sA.id}" value="${vA}" min="0" oninput="updSplit('${b.id}')" aria-label="${sA.label}">
+          <button class="sbt" onclick="adjSplit('${sA.id}','${b.id}',1)">+</button>
+          <button class="sbt" onclick="adjSplit('${sA.id}','${b.id}',10)" title="+10">+10</button>
+        </div>
+      </div>
+      <div class="split-div"></div>
+      <div>
+        <div class="spl-lbl">${sB.label}<span class="spl-sub">${sB.sublabel}</span></div>
+        <div class="inp-row">
+          <button class="sbt" onclick="adjSplit('${sB.id}','${b.id}',-10)" title="−10">−10</button>
+          <button class="sbt" onclick="adjSplit('${sB.id}','${b.id}',-1)">&minus;</button>
+          <input type="number" id="inp-${sB.id}" value="${vB}" min="0" oninput="updSplit('${b.id}')" aria-label="${sB.label}">
+          <button class="sbt" onclick="adjSplit('${sB.id}','${b.id}',1)">+</button>
+          <button class="sbt" onclick="adjSplit('${sB.id}','${b.id}',10)" title="+10">+10</button>
+        </div>
+      </div>
+      <div class="split-div"></div>
+      <div class="split-tot-row">
+        <span class="split-tot-lbl">Gesamt</span>
+        <span class="split-tot-val" id="stot-${b.id}">${tot}\u202f/\u202f${b.target}\u202f${u}</span>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="track"><div class="fill" id="fill-${b.id}" style="width:${pct}%;background:${fc}"></div></div>
+      <div class="sub-tracks">
+        <div class="sub-tr-row">
+          <span class="sub-tr-lbl">DGVT (mind.\u202f30)</span>
+          <div class="sub-tr"><div class="sub-fill" id="sf-${sA.id}" style="width:${pA}%;background:${fcA}"></div></div>
+          <span class="sub-val" id="sv-${sA.id}">${vA}\u202fDS</span>
+        </div>
+        <div class="sub-tr-row">
+          <span class="sub-tr-lbl">Extern (max.\u202f30)</span>
+          <div class="sub-tr"><div class="sub-fill" id="sf-${sB.id}" style="width:${pB}%;background:${fcB}"></div></div>
+          <span class="sub-val" id="sv-${sB.id}">${vB}\u202fDS</span>
+        </div>
+      </div>
+      <div class="prog-meta">
+        <span class="p-done" id="done-${b.id}">${pct}% erreicht</span>
+        <span class="p-rem${done?' ok':''}" id="rem-${b.id}" style="${done?'':'color:'+fc}">
+          ${done?'Abgeschlossen':rem+'\u202f'+u+' verbleibend'}</span>
+      </div>
+    </div>
+    <div class="c-note">${b.note}</div>`;
+  return el;
+}
+
+function updCard(id,raw,u){
+  const b=BEREICHE.find(x=>x.id===id);
+  const v=Math.max(0,Math.min(parseInt(raw)||0,b.target));
+  state[id]=v;saveState(state);
+  const fc=col(b.color).f;
+  const pct=Math.min(100,Math.round(v/b.target*100));
+  const rem=Math.max(0,b.target-v);const done=rem===0;
+  document.getElementById('fill-'+id).style.width=pct+'%';
+  document.getElementById('done-'+id).innerHTML=`${v}\u202f/\u202f${b.target}\u202f${u||'h'}\u2002&middot;\u2002${pct}%`;
+  const r=document.getElementById('rem-'+id);
+  r.textContent=done?'Abgeschlossen':rem+'\u202f'+(u||'h')+' verbleibend';
+  r.className='p-rem'+(done?' ok':'');r.style.color=done?'':fc;
+  updTotal();
+}
+
+function adj(id,d,u){
+  const b=BEREICHE.find(x=>x.id===id);
+  const i=document.getElementById('inp-'+id);
+  const nv=Math.max(0,Math.min((parseInt(i.value)||0)+d,b.target));
+  i.value=nv;updCard(id,nv,u||b.unit||'h');
+}
+
+function adjSplit(sid,pid,d){
+  const i=document.getElementById('inp-'+sid);
+  i.value=Math.max(0,(parseInt(i.value)||0)+d);
+  updSplit(pid);
+}
+
+function updSplit(pid){
+  const b=BEREICHE.find(x=>x.id===pid);
+  const sA=b.splitA,sB=b.splitB;
+  const fc=col(b.color).f,fcA=col(sA.color).f,fcB=col(sB.color).f;
+  const vA=Math.max(0,parseInt(document.getElementById('inp-'+sA.id).value)||0);
+  const vB=Math.max(0,parseInt(document.getElementById('inp-'+sB.id).value)||0);
+  state[sA.id]=vA;state[sB.id]=vB;saveState(state);
+  const u=b.unit||'DS';const tot=vA+vB;
+  const pct=Math.min(100,Math.round(tot/b.target*100));
+  const pA=Math.min(100,Math.round(vA/sA.target*100));
+  const pB=Math.min(100,Math.round(vB/sB.target*100));
+  const rem=Math.max(0,b.target-tot);const done=rem===0;
+  document.getElementById('fill-'+pid).style.width=pct+'%';
+  document.getElementById('stot-'+pid).textContent=`${tot}\u202f/\u202f${b.target}\u202f${u}`;
+  document.getElementById('sf-'+sA.id).style.width=pA+'%';
+  document.getElementById('sf-'+sB.id).style.width=pB+'%';
+  document.getElementById('sv-'+sA.id).textContent=vA+'\u202fDS';
+  document.getElementById('sv-'+sB.id).textContent=vB+'\u202fDS';
+  document.getElementById('done-'+pid).textContent=pct+'% erreicht';
+  const r=document.getElementById('rem-'+pid);
+  r.textContent=done?'Abgeschlossen':rem+'\u202f'+u+' verbleibend';
+  r.className='p-rem'+(done?' ok':'');r.style.color=done?'':fc;
+  updTotal();
+}
+
+function updTotal(){
+  let done=0;
+  BEREICHE.filter(b=>b.pflicht).forEach(b=>done+=Math.min(b.target,parseInt(state[b.id]||0)));
+  const pct=Math.min(100,Math.round(done/TOTAL_TARGET*100));
+  const rem=Math.max(0,TOTAL_TARGET-done);
+  document.getElementById('tot-num').innerHTML=`${done.toLocaleString('de-DE')} <span>/ ${TOTAL_TARGET.toLocaleString('de-DE')}\u202fh</span>`;
+  document.getElementById('tot-pct').textContent=pct+'%';
+  document.getElementById('tot-fill').style.width=pct+'%';
+  document.getElementById('tot-sub').textContent=rem===0?'Alle Pflichtstunden abgeleistet':rem.toLocaleString('de-DE')+'\u202fh verbleibend';
+}
+
+function resetAll(){
+  if(!confirm('Alle Stunden wirklich zurücksetzen?'))return;
+  state={};saveState(state);renderAll();
+}
+
+function renderAll(){
+  ['grid-pt','grid-pa','grid-sv','grid-th','grid-se','grid-fs','grid-gpt']
+    .forEach(id=>document.getElementById(id).innerHTML='');
+  BEREICHE.forEach(b=>document.getElementById(b.grid).appendChild(b.splitCard?renderSplitCard(b):renderCard(b)));
+  updTotal();
+}
+
+// Theme
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  const dark=t==='dark';
+  document.getElementById('ico-sun').style.display=dark?'none':'';
+  document.getElementById('ico-moon').style.display=dark?'':'none';
+  document.getElementById('tlbl').textContent=dark?'Hell':'Dunkel';
+  document.getElementById('tc').content=dark?'#1e2228':'#f5f0e8';
+}
+function toggleTheme(){
+  const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  applyTheme(n);try{localStorage.setItem('pia_theme',n)}catch{}
+}
+(function(){
+  const s=()=>{try{return localStorage.getItem('pia_theme')}catch{return null}};
+  applyTheme(s()||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+})();
+
+// Offline
+function chkOnline(){document.getElementById('offline-pill').classList.toggle('show',!navigator.onLine)}
+addEventListener('online',chkOnline);addEventListener('offline',chkOnline);chkOnline();
+
+// Service Worker
+if('serviceWorker' in navigator && location.protocol!=='file:'){
+  addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(r=>console.log('[PiA] SW aktiv:',r.scope))
+      .catch(e=>console.warn('[PiA] SW-Fehler:',e));
+  });
+}
+
+renderAll();
+</script>
+</body>
+</html>
